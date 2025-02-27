@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 8479898147098580058}
   - component: {fileID: 4102889591220553025}
   - component: {fileID: -4540776638590591834}
-  - component: {fileID: -2135831108284600684}
   m_Layer: 7
   m_Name: MedBubble
   m_TagString: Ball
@@ -77,7 +76,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 2
   m_Sprite: {fileID: 21300000, guid: 1da2618c36442d04c94fc0a7e2fd0e29, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -179,19 +178,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   minRotation: -100
   maxRotation: 100
---- !u!114 &-2135831108284600684
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3399489218078191040}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a0ea9f921d3c4e9488ecd698dd169703, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  smallBallPrefab: {fileID: 4438732425626759712, guid: 2ac4ccd2b5435544a95ed9abb546ce13, type: 3}
-  mediumBallPrefab: {fileID: 3399489218078191040}
-  largeBallPrefab: {fileID: 885864748443509521, guid: 6de9ccb0bd3f86247b593833ed2574b4, type: 3}
-  currentSize: 1
