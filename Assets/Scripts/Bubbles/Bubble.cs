@@ -1,21 +1,30 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using UnityEngine;
-public struct BubbleCollision
+public struct BubbleBubbleCollision
 {
     public Bubble From;
     public Bubble To;
+}
+public struct BubbleBulletCollision
+{
+    public Bubble bubble;
+    public Bullet bullet;
 }
 
 [RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(CircleCollider2D))]
 public class Bubble : MonoBehaviour
 {
-    public Action<BubbleCollision> OnCollisionWithPair;
-    public Action<Bubble> OnCollisionWithBullet;
+    public Action<BubbleBubbleCollision> OnCollisionWithPair;
+    public Action<BubbleBulletCollision> OnCollisionWithBullet;
+    public Action OnCollisionWithPlayer;
 
     private Rigidbody2D rb;
+    private CircleCollider2D col;
+
     private BubbleData data;
     public BubbleData Data { get { return data;} }
 
@@ -27,17 +36,33 @@ public class Bubble : MonoBehaviour
     private int hp;
     public int HP { get { return hp; } }
 
-    public void Initialize(BubbleData data, Rigidbody2D rb, int level)
+    private void OnEnable()
     {
-        this.data = data;
-        this.rb = rb;
-        hp = (int)(data.hpFactor * (level + data.baseHP));
-
-        wokeUp = false;
+        rb ??= GetComponent<Rigidbody2D>();
+        col ??= GetComponent<CircleCollider2D>();
+        col.enabled = true;
 
         InitRotator(data.minRotation, data.maxRotation);
         InitBouncer(data.initialSpeed, data.sizeFactor);
-        WakeUp(data.wakeUpTime);
+
+        if (!wokeUp)
+            WakeUp(data.wakeUpTime);
+
+        Debug.Log("Enabled Bubble " + hp + " tipo: " + Data.thisType.ToString());
+    }
+    public void Initialize(BubbleData data, int hp, bool isNewBubble)
+    {
+        this.data = data;
+        this.hp = hp;
+
+        wokeUp = !isNewBubble;
+
+        transform.localScale = new Vector3(data.scaleFactor, data.scaleFactor, data.scaleFactor);
+        name = data.bubbleName;
+        gameObject.layer = (int)data.thisType;
+
+        //Debug.Log("Created " + name + " with " + hp + " hp");
+
     }
 
     private void FixedUpdate()
@@ -51,28 +76,53 @@ public class Bubble : MonoBehaviour
     public void GetDamage(int dmgAmount)
     {
         hp -= dmgAmount;
+        //Debug.Log("Yo " + name + " recibi " + dmgAmount + " y me queda " + hp + " puntos de vida");
         //Update UI
         //Do Sound
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (!gameObject.activeSelf)
+        bool collisionValid = gameObject.activeSelf && collision.collider.gameObject.activeSelf;
+
+        if (!collisionValid || collision.collider.gameObject.layer != gameObject.layer)
             return;
 
-        if (collision.collider.tag != tag)
-        {
-            OnCollisionWithBullet?.Invoke(this);
-            return;
-        }
 
-        BubbleCollision col = new BubbleCollision()
+        BubbleBubbleCollision col = new BubbleBubbleCollision()
         {
             From = this,
             To = collision.collider.gameObject.GetComponent<Bubble>()
         };
 
-        OnCollisionWithPair?.Invoke(col);
+        if(col.From.Data.mergeTo == col.To.Data.mergeTo)
+            OnCollisionWithPair?.Invoke(col);
+    }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (!gameObject.activeSelf)
+            return;
+
+        switch (collision.gameObject.layer)
+        {
+            case 9://Player
+                OnCollisionWithPlayer?.Invoke();
+                break;
+            case 10://Bullet
+                BubbleBulletCollision col = new BubbleBulletCollision()
+                {
+                    bubble = this,
+                    bullet = collision.GetComponent<Bullet>()
+                };
+                //Debug.Log("Tengo " + hp + " hp y me dispararon");
+                OnCollisionWithBullet?.Invoke(col);
+                break;
+            default:
+                Debug.Log("Choque con algo que no es un pj o una bala.");
+                break;      
+        }
+        return;
     }
 
     #region BubbleBounce
@@ -82,7 +132,7 @@ public class Bubble : MonoBehaviour
         objectRadius = GetComponent<CircleCollider2D>().radius * Mathf.Max(transform.localScale.x, transform.localScale.y);
 
         float speed = initialSpeed * sizeFactor;
-        rb.velocity = new Vector2(UnityEngine.Random.Range(-1f, 1f), speed);
+        rb.velocity = new Vector2(UnityEngine.Random.Range(-1.5f, 1.5f), -speed);
     }
     private void Bounce()
     {

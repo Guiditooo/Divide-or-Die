@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class SmallBubble : Bubble, IMergeable
 {
-    public Action<BubbleCollision> OnCollisionWithPair;
+    public Action<BubbleBubbleCollision> OnCollisionWithPair;
     public void Merge(IMergeable other)
     {
         throw new System.NotImplementedException();
@@ -18,7 +18,7 @@ public class SmallBubble : Bubble, IMergeable
             return;
         Debug.Log("Me Choque");
 
-        BubbleCollision col = new BubbleCollision()
+        BubbleBubbleCollision col = new BubbleBubbleCollision()
         {
             From = this,
             To = collision.collider.gameObject.GetComponent<Bubble>()

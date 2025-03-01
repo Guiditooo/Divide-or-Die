@@ -3,8 +3,8 @@ using UnityEngine;
 public enum BubbleType
 {
     LargeBubble = 6,
-    MediumBubble,
-    SmallBubble
+    MediumBubble = 7,
+    SmallBubble = 8
 }
 
 [CreateAssetMenu(fileName = "BubbleData", menuName = "ScriptableObjects/BubbleData", order = 1)]

@@ -18,7 +18,7 @@ MonoBehaviour:
   scaleFactor: 0.2
   hpFactor: 2
   baseHP: 2
-  initialSpeed: 1
+  initialSpeed: 0.2
   minRotation: -100
   maxRotation: 100
   wakeUpTime: 1

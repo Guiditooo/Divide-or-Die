@@ -17,7 +17,7 @@ TagManager:
   - SmallBubble
   - Player
   - Bullet
-  - 
+  - BulletRecycler
   - 
   - 
   - 
