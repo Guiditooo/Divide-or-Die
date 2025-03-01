@@ -4,11 +4,21 @@ using UnityEngine;
 
 public class Bullet : MonoBehaviour
 {
-    [SerializeField] private float speed = 10;
+    private float speed = 10;
+
+    public void Initialize(BulletData data)
+    {
+        speed = data.speed;
+    }
 
     private void Update()
     {
         Vector3 movement = gameObject.transform.up * speed * Time.deltaTime;
         transform.Translate(movement);
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        
     }
 }

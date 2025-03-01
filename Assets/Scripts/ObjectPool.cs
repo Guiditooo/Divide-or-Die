@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-public class ObjectPool<T> where T : class
+public class ObjectPool<T>
 {
     private Queue<T> _pool; // Cola para almacenar los objetos
     private Func<T> _createFunc; // Función para crear nuevos objetos
@@ -56,4 +56,5 @@ public class ObjectPool<T> where T : class
         _onRelease?.Invoke(obj); // Ejecutar la acción OnRelease
         _pool.Enqueue(obj);
     }
+
 }

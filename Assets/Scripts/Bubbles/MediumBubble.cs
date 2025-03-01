@@ -2,9 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LargeBubble : Bubble, IBubble
+public class MediumBubble : Bubble, IMergeable
 {
-    public void Explode()
+    public void Merge(IMergeable other)
     {
         throw new System.NotImplementedException();
     }
