@@ -61,6 +61,8 @@ public class objectpool<t>
 
 using System.Collections.Generic;
 using System;
+using System.Diagnostics;
+using UnityEngine;
 
 public class ObjectPool<T> where T : class
 {
@@ -116,7 +118,22 @@ public class ObjectPool<T> where T : class
         // Verificar si el objeto está activo
         if (!_activeObjects.Contains(obj))
         {
-            throw new InvalidOperationException("El objeto no está activo o ya fue liberado.");
+            return;
+            //UnityEngine.Debug.Break();
+            //if(obj is GameObject)
+            //{
+            //    GameObject go = obj as GameObject;
+            //    Bubble b = go.GetComponent<Bubble>();
+            //    Bullet t = go.GetComponent<Bullet>();
+            //    if (b != null)
+            //        throw new InvalidOperationException("Soy una bubble con problemas");
+                
+            //    if(t != null)
+            //        throw new InvalidOperationException("Soy una bullet con problemas");
+
+            //    throw new InvalidOperationException("Soy un objeto vacio con problemas");
+            //}
+            
         }
 
         // Ejecutar la acción OnRelease
@@ -134,13 +151,14 @@ public class ObjectPool<T> where T : class
     /// </summary>
     public void ReleaseAll()
     {
-        // Recorre todos los objetos que están fuera del pool
         foreach (var obj in _activeObjects)
         {
-            _onRelease?.Invoke(obj); // Ejecutar la acción OnRelease (si está definida)
-            _pool.Enqueue(obj); // Devolver el objeto al pool
+            if (obj != null)
+            {
+                _onRelease?.Invoke(obj);
+                _pool.Enqueue(obj);
+            }
         }
-
-        _activeObjects.Clear(); // Limpiar la lista de objetos activos
+        _activeObjects.Clear();
     }
 }

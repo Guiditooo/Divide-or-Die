@@ -40,6 +40,7 @@ public class Bubble : MonoBehaviour
     {
         rb ??= GetComponent<Rigidbody2D>();
         col ??= GetComponent<CircleCollider2D>();
+        
         col.enabled = true;
 
         InitRotator(data.minRotation, data.maxRotation);
@@ -81,6 +82,11 @@ public class Bubble : MonoBehaviour
         //Do Sound
     }
 
+    public void ResetData()
+    {
+        data = null;
+    }
+
     private void OnCollisionEnter2D(Collision2D collision)
     {
         bool collisionValid = gameObject.activeSelf && collision.collider.gameObject.activeSelf;
@@ -88,11 +94,14 @@ public class Bubble : MonoBehaviour
         if (!collisionValid || collision.collider.gameObject.layer != gameObject.layer)
             return;
 
+        Bubble otherBubble = collision.collider.gameObject.GetComponent<Bubble>();
+        if (otherBubble == null)
+            return;
 
         BubbleBubbleCollision col = new BubbleBubbleCollision()
         {
             From = this,
-            To = collision.collider.gameObject.GetComponent<Bubble>()
+            To = otherBubble
         };
 
         if(col.From.Data.mergeTo == col.To.Data.mergeTo)
@@ -103,6 +112,10 @@ public class Bubble : MonoBehaviour
     {
         if (!gameObject.activeSelf)
             return;
+
+        if (collision == null)
+            return;
+        
 
         switch (collision.gameObject.layer)
         {
@@ -119,7 +132,7 @@ public class Bubble : MonoBehaviour
                 OnCollisionWithBullet?.Invoke(col);
                 break;
             default:
-                Debug.Log("Choque con algo que no es un pj o una bala.");
+                //Debug.Log("Choque con algo que no es un pj o una bala.");
                 break;      
         }
         return;

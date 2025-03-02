@@ -2,7 +2,7 @@ using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
 
-public class BubbleManager : MonoBehaviour
+public class GameManager : MonoBehaviour
 {
     [Header("Bubble Data")]
     [SerializeField] private BubbleData smallBubbleData;
@@ -29,10 +29,15 @@ public class BubbleManager : MonoBehaviour
     private int level;
     private int bulletDamage;
 
+    private Coroutine autoShootCoroutine;
+
+    private bool isPaused = false;
+    public bool IsPaused { get { return isPaused; } }
     private void Start()
     {
         level = 1;
         bulletDamage = 1;
+        isPaused = false;
 
         bubblePool = new ObjectPool<GameObject>
             (
@@ -43,21 +48,23 @@ public class BubbleManager : MonoBehaviour
         bulletPool = new ObjectPool<GameObject>
             (
                 createFunc: () => Instantiate(bulletPrefab, Vector3.zero, bulletPrefab.transform.rotation, bulletParent),
-                initialSize: 1
+                initialSize: 4
             );
 
-        StartCoroutine(AutoShoot(0.25f));
+        autoShootCoroutine = StartCoroutine(AutoShoot(0.33f));
     }
 
     #region Bubbles
     private GameObject CreateBubble(BubbleData data, Vector3 pos, bool isMerged, int hp = 0, bool isNewBubble = false)
     {
-        //GameObject bubble = bubblePool.Get();
-        GameObject bubble = Instantiate(bubblePrefab, Vector3.zero, Quaternion.identity, bubbleParent);
+        GameObject bubble = bubblePool.Get();
+        //GameObject bubble = Instantiate(bubblePrefab, Vector3.zero, Quaternion.identity, bubbleParent);
 
         bubble.transform.SetPositionAndRotation(pos, Quaternion.identity);
 
-        Bubble bubbleComponent = bubble.GetOrAddComponent<Bubble>();
+        Bubble bubbleComponent = bubble.GetComponent<Bubble>();
+        if (bubbleComponent == null)
+            bubbleComponent = bubble.AddComponent<Bubble>();
 
         bubbleComponent.Initialize(data, isMerged ? hp : (int)(data.hpFactor * (level + data.baseHP)), isNewBubble);
 
@@ -72,8 +79,6 @@ public class BubbleManager : MonoBehaviour
 
     private void DamageBubble(BubbleBulletCollision col)
     {
-        RecycleBullet(col.bullet);
-
         if (col.bubble.HP - bulletDamage <= 0)
         {
             PopBubble(col.bubble);
@@ -83,36 +88,31 @@ public class BubbleManager : MonoBehaviour
             col.bubble.GetDamage(bulletDamage);
         }
 
+        RecycleBullet(col.bullet);
     }
 
     private void PopBubble(Bubble bubble)
     {
+        if (bubble == null)
+            return;
 
-        BubbleData data = bubble.Data;
+        BubbleData divideInData = bubble.Data.divideIn;
 
         Bounds bounds = bubble.gameObject.GetComponent<SpriteRenderer>().bounds;
 
         Vector3 pos1 = new Vector3(bounds.min.x, bounds.max.y, 0);
         Vector3 pos2 = new Vector3(bounds.max.x, bounds.max.y, 0);
 
-        bubble.OnCollisionWithPair -= MergeBubbles;
-        bubble.OnCollisionWithBullet -= DamageBubble;
-        bubble.OnCollisionWithPlayer -= ShowGameOver;
-
-        bubble.gameObject.SetActive(false);
-
-        Destroy(bubble.gameObject);
-        //bubblePool.Release(bubble.gameObject);
-
-        //Debug.Log("Exploto " + bubble.name);
-
-        if (data.divideIn == null)
+        if (divideInData == null)
+        {
+            RecycleBubble(bubble.gameObject);
             return;
+        }
 
-        //Debug.Log("La burbuja esta creando 2 " + data.divideIn.thisType.ToString());
+        CreateBubble(divideInData, pos1, false);
+        CreateBubble(divideInData, pos2, false);
 
-        CreateBubble(data.divideIn, pos1, false);
-        CreateBubble(data.divideIn, pos2, false);
+        RecycleBubble(bubble.gameObject);
     }
 
     private void MergeBubbles(BubbleBubbleCollision col)
@@ -120,27 +120,41 @@ public class BubbleManager : MonoBehaviour
         Bubble bub1 = col.From;
         Bubble bub2 = col.To;
 
-        if (bub1.Data.mergeTo.thisType != bub2.Data.mergeTo.thisType)
+        if (bub1.Data.mergeTo == null || bub2.Data.mergeTo == null || bub1.Data.mergeTo.thisType != bub2.Data.mergeTo.thisType)
         {
             return;
         }
 
-        bub1.gameObject.GetComponent<CircleCollider2D>().enabled = false;
-        bub2.gameObject.GetComponent<CircleCollider2D>().enabled = false;
-
         CreateBubble(bub1.Data.mergeTo, (bub2.transform.position + bub1.transform.position) / 2, true, bub1.HP + bub2.HP);
 
-        bub1.gameObject.SetActive(false);
-        bub2.gameObject.SetActive(false);
+        RecycleBubble(bub2.gameObject);
+        RecycleBubble(bub1.gameObject);
+    }
 
-        Destroy(bub1.gameObject);
-        Destroy(bub2.gameObject);
+    private void RecycleBubble(GameObject bubble)
+    {
+        bubble.name = "Recicled Bubble";
+        Bubble bubbleComponent = bubble.GetComponent<Bubble>();
 
-        //bubblePool.Release(bub1.gameObject);
-        //bubblePool.Release(bub2.gameObject);
-  
-        //Debug.Log("Creando una " + bub1.Data.mergeTo.thisType.ToString());
-        //Debug.Log("Creando una " + bub2.Data.mergeTo.thisType.ToString());
+        if (bubbleComponent != null)
+        {
+            // Limpiar eventos suscritos
+            bubbleComponent.OnCollisionWithPair = null;
+            bubbleComponent.OnCollisionWithBullet = null;
+            bubbleComponent.OnCollisionWithPlayer = null;
+
+            // Reiniciar propiedades
+            bubbleComponent.gameObject.SetActive(false);
+            bubbleComponent.transform.position = Vector3.zero;
+            bubbleComponent.transform.localScale = Vector3.one;
+            bubbleComponent.transform.rotation = Quaternion.identity;
+            bubbleComponent.GetComponent<Rigidbody2D>().velocity = Vector2.zero;
+            bubbleComponent.GetComponent<CircleCollider2D>().enabled = false;
+            bubbleComponent.ResetData();
+        }
+
+        bubblePool.Release(bubble);
+        //Destroy(bub1.gameObject);
     }
 
     #endregion
@@ -153,20 +167,25 @@ public class BubbleManager : MonoBehaviour
         bullet.transform.position = bulletSpawnArea.position;
 
         Bullet bul = bullet.GetComponent<Bullet>();
+        if (bul == null)
+            bul = bullet.AddComponent<Bullet>();
+
         bul.Initialize(bulletData);
         bul.OnRecycle += RecycleBullet;
+
+        bullet.name = "Bullet <->";
 
         bullet.SetActive(true);
     }
     void RecycleBullet(Bullet bullet)
     {
+        bullet.name = "Recicled Bullet";
+
         bullet.gameObject.GetComponent<BoxCollider2D>().enabled = false;
-        bullet.OnRecycle -= RecycleBullet;
+        bullet.OnRecycle = null;
         bullet.gameObject.SetActive(false);
 
         bulletPool.Release(bullet.gameObject);
-
-        //Debug.Log("Bala Reseteada");
     }
     #endregion
 
@@ -178,10 +197,6 @@ public class BubbleManager : MonoBehaviour
     void StartGame()
     {
         StartCoroutine(AutoShoot(0.5f));
-    }
-    void PauseGame()
-    {
-
     }
 
     #endregion
@@ -213,7 +228,10 @@ public class BubbleManager : MonoBehaviour
         {
             CreateBullet();
         }
-
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            PauseGame();
+        }
 
     }
 
@@ -224,6 +242,17 @@ public class BubbleManager : MonoBehaviour
         StartCoroutine(AutoShoot(spareTime));
     }
 
+    public void PauseGame()
+    {
+        isPaused = !isPaused;
+
+        Time.timeScale = !isPaused ? 1.0f : 0.0f;
+
+        if (autoShootCoroutine != null)
+        {
+            StopCoroutine(autoShootCoroutine);
+        }
+    }
     #endregion
 
 }

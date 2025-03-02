@@ -12,6 +12,7 @@ public class BubbleData : ScriptableObject
 {
     [Header("Bubble Type")]
     public BubbleType thisType;
+
     [Header("Bubble Attributes")]
     public string bubbleName;
     public float sizeFactor;
@@ -22,6 +23,7 @@ public class BubbleData : ScriptableObject
     public float minRotation;
     public float maxRotation;
     public float wakeUpTime;
+
     [Header("Bubble Results")]
     public BubbleData mergeTo;
     public BubbleData divideIn;

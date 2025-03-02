@@ -38,11 +38,15 @@ public class Bullet : MonoBehaviour
             return;
 
         col.enabled = false;
+
         RecycleIn(0.1f);
     }
 
     private void RecycleIn(float wakeUpTime)
     {
+        if (this == null)
+            return;
+
         StartCoroutine(WaitFor(wakeUpTime));
     }
     IEnumerator WaitFor(float timeInSeconds)

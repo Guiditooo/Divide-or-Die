@@ -18,9 +18,9 @@ MonoBehaviour:
   scaleFactor: 0.1
   hpFactor: 0.5
   baseHP: 2
-  initialSpeed: 1
+  initialSpeed: 1.5
   minRotation: -100
   maxRotation: 100
-  wakeUpTime: 0.8
+  wakeUpTime: 1.5
   mergeTo: {fileID: 11400000, guid: b5a49199af34628459e83edc98396ecd, type: 2}
   divideIn: {fileID: 0}
