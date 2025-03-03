@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -28,8 +29,12 @@ public class GameManager : MonoBehaviour
 
     private int level;
     private int bulletDamage;
+    private int smallBubbleCount;
 
     private Coroutine autoShootCoroutine;
+
+    public Action OnLevelWin;
+    public Action OnLevelLose;
 
     private bool isPaused = false;
     public bool IsPaused { get { return isPaused; } }
@@ -37,6 +42,8 @@ public class GameManager : MonoBehaviour
     {
         level = 1;
         bulletDamage = 1;
+        smallBubbleCount = 4;
+
         isPaused = false;
 
         bubblePool = new ObjectPool<GameObject>
@@ -106,6 +113,9 @@ public class GameManager : MonoBehaviour
         if (divideInData == null)
         {
             RecycleBubble(bubble.gameObject);
+            smallBubbleCount--;
+            if (smallBubbleCount <= 0)
+                OnLevelWin?.Invoke();
             return;
         }
 

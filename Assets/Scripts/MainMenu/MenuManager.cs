@@ -9,7 +9,7 @@ public class MenuManager : MonoBehaviour
     [SerializeField] private CanvasGroup mainMenuPanel;
     [SerializeField] private CanvasGroup creditPanel;
 
-    public float showSpeed = 1;
+    [SerializeField] private float showSpeed = 1;
 
     public void Start()
     {
